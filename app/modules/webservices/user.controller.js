@@ -109,7 +109,7 @@ class UserController {
     details = async(req,res)=>{
         try {
             let user = await this.#repo.userRepo.getById(req.user._id);
-            if(user.isDeleted){
+            if(!user || user.isDeleted){
                 return res.status.send({
                     status: 400,
                     data: null,
@@ -133,7 +133,7 @@ class UserController {
     update = async(req,res)=>{
         try {
             let user = await this.#repo.userRepo.getById(req.user._id);
-            if(user.isDeleted){
+            if(!user || user.isDeleted){
                 return res.status.send({
                     status: 400,
                     data: null,
@@ -185,8 +185,8 @@ class UserController {
 
     changePassword = async(req,res)=>{
         try {
-            let user = await this.#repo.userRepo.getById(req.user._id);
-            if(user.isDeleted){
+            let user = await this.#repo.userRepo.getByField({_id: req.user._id, isDeleted: false});
+            if(!user || user.isDeleted){
                 return res.status(400).send({
                     status: 400,
                     data: null,
@@ -291,7 +291,14 @@ class UserController {
 
     otpVerification = async(req,res)=>{
         try {
-            let user = await this.#repo.userRepo.getByField({email: req.body.email, isDeleted: false});
+            if(req.body.id){
+                return res.status(400).send({
+                    status: 400,
+                    data: null,
+                    message: "ID is required"
+                });
+            }
+            let user = await this.#repo.userRepo.getByField({_id: req.body.id, isDeleted: false});
             if(!user){
                 return res.status(400).send({
                     status: 400,
@@ -343,7 +350,14 @@ class UserController {
      */
     resetPassword = async(req,res)=>{
         try {
-            let user = await this.#repo.userRepo.getByField({email: req.body.email, isDeleted: false});
+            if(req.body.id){
+                return res.status(400).send({
+                    status: 400,
+                    data: null,
+                    message: "ID is required"
+                });
+            }
+            let user = await this.#repo.userRepo.getByField({_id: req.body.id, isDeleted: false});
             if(!user){
                 return res.status(400).send({
                     status: 400,

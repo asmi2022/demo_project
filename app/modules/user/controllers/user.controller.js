@@ -111,6 +111,12 @@ class UserController {
 
     otpVerification = async(req,res)=>{
         try {
+            if(!req.body.id){
+                return res.status(400).send({
+                    status: 400,
+                    message: "ID is required"
+                });
+            }
             let user = await this.#repo.UserRepo.getById(req.body.id);
             if(!user){
                 return res.status(400).send({
@@ -232,80 +238,164 @@ class UserController {
 
     list = async(req,res)=>{
         try {
-            let role = await this.#repo.RoleRepo.getByField({ role: "User", isDeleted: false, status: "Active" });
-            // let query = { role: role._id, isDeleted: false, status: "Active" };
-            // if(req.body.search){
-            //     query.$or = [
-            //         {
-            //             email: { $regex: req.body.search, $options: "i" }
-            //         },
-            //         {
-            //             name: { $regex: req.body.search, $options: "i" }
-            //         }
-            //     ]
-            // }
-            // let users = await this.#repo.UserRepo.getAll(query);
-            req.body.abcd = role._id;
-            let users = await this.#repo.UserRepo.getAll(req);
-            return res.status(200).send({
-                status: 200,
-                data: users && users.length? users:[],
-                message: users && users.length?"User listing fecthed successfully":"No user found"
-            });
-        } catch (error) {
-            return res.status(500).send({
-                status: 500,
-                data: null,
-                message: error.message
-            });
-        }
-    }
-
-    list1 =async(req,res)=>{
-        try {
-            let role = await this.#repo.RoleRepo.getByField({ role: "User", isDeleted: false, status: "Active" });
-            let query = { role: role._id, isDeleted: false, status: "Active" };
-            if(req.body.search){
-                query.$or = [
-                    {
-                        email: { $regex: req.body.search, $options: "i" }
-                    },
-                    {
-                        name: { $regex: req.body.search, $options: "i" }
-                    }
-                ]
-            }
-            let user = await this.#repo.UserRepo.getAll1(query);
-            return res.status(200).send({
-                status: 200,
-                data: user,
-                message: "User listing fetched successfully"
-            });
-        } catch (error) {
-            return res.status(500).send({
-                status: 500,
-                data: null,
-                message: error.message
-            })
-        }
-    }
-
-    list2 = async(req,res)=>{
-        try {
-            let role = await this.#repo.RoleRepo.getByField({ role: "User", isDeleted: false, status: "Active" });
+            let role = await this.#repo.RoleRepo.getByField({role: "User", isDeleted: false});
             req.body.role = role._id;
-            let users = await this.#repo.UserRepo.getAll2(req);
+            let users = await this.#repo.UserRepo.getAll(req);
+            // if(users && users.length){
+            //     return res.status(200).send({
+            //         status: 200,
+            //         data: users,
+            //         message: "Users fetched successfully"
+            //     });
+            // }
+            // return res.status(200).send({
+            //     status: 200,
+            //     data: [],
+            //     message: "No user found"
+            // });
+            if(users && users.docs && users.docs.length){
+                return res.status(200).send({
+                    status: 200,
+                    data: users,
+                    message: "Users fetched successfully"
+                });
+            }
             return res.status(200).send({
                 status: 200,
-                data: users && users.length?users:[],
-                message: users && users.length?"Listing fetched successfully":"No user found"
+                data: {},
+                message: "No user found"
             });
         } catch (error) {
             return res.status(500).send({
                 status: 500,
                 data: null,
                 message: error.message
-            })
+            });
+        }
+    }
+
+    addUser = async(req,res)=>{
+        try {
+            if(!req.body.email || !validator.isEmail(req.body.email)){
+                return res.status(400).send({
+                    status: 400,
+                    data: null,
+                    message: "Enter an email"
+                });
+            }
+            let role = await this.#repo.RoleRepo.getByField({ role: "User", isDeleted: false });
+            req.body.email = req.body.email.trim().toLowerCase();
+            let existUser = await this.#repo.UserRepo.getByField({ email: req.body.email, isDeleted: false, role: role._id });
+            if(existUser){
+                return res.status(400).send({
+                    status: 400,
+                    data: null,
+                    message: "User already exist"
+                });
+            }
+            let addUser = await this.#repo.UserRepo.save(req.body);
+            if(addUser && addUser._id){
+                return res.status(200).send({
+                    status: 200,
+                    data: addUser,
+                    message: "User has been added successfully"
+                });
+            }
+        } catch (error) {
+            return res.status(500).send({
+                status: 500,
+                data: null,
+                message: error.message
+            });
+        }
+    }
+
+    updateUser = async(rew,res)=>{
+        try {
+            if(!req.body.id){
+                return res.status(400).send({
+                    status: 400,
+                    data: null,
+                    message: "ID is required"
+                });
+            }
+            let user = await this.#repo.UserRepo.getById(req.body.id);
+            if(!user){
+                return res.status(400).send({
+                    status: 400,
+                    data: null,
+                    message: "User does not exist"
+                });
+            }
+            if(!req.body.email){
+                return res.status(400).send({
+                    status: 400,
+                    data: null,
+                    message: "Enter your email"
+                });
+            }
+            let existUser = await this.#repo.UserRepo.getByField({ email: req.body.email, isDeleted: false, _id: { $ne: user._id } });
+            if(!existUser){
+                return res.status(400).send({
+                    status: 400,
+                    data: null,
+                    message: "This email cannot be used"
+                });
+            }
+            if(!req.body.name){
+                return res.status(400).send({
+                    status: 400,
+                    data: null,
+                    message: "Enter name"
+                });
+            }
+            if(req.files && req.files.length){
+                req.body.profilePic = req.files[0].filename;
+            }
+            let updateUser = await this.#repo.UserRepo.updateById(user._id, req.body);
+            if(updateUser && updateUser._id){
+                return res.status(200).send({
+                    status: 200,
+                    data: updateUser,
+                    message: "User has been updated successfully"
+                });
+            }
+            return res.status(400).send({
+                status: 400,
+                data: null,
+                message: "Something went wrong"
+            });
+        } catch (error) {
+            return res.status(500).send({
+                status: 500,
+                data: null,
+                message: error.message
+            });
+        }
+    }
+
+    deleteUser = async(req,res)=>{
+        try {
+            let  user = await this.#repo.UserRepo.getById(req.params.id);
+            if(!user){
+                return res.status(400).send({
+                    status: 400,
+                    data: null,
+                    message: "User does not exist"
+                });
+            }
+            await this.#repo.UserRepo.deleteById(user._id);
+            return res.status(200).send({
+                status: 200,
+                data: true,
+                message: "User has been deleted successfully"
+            });
+        } catch (error) {
+            return res.status(500).send({
+                status: 500,
+                data: null,
+                message: error.message
+            });
         }
     }
 }

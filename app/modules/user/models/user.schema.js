@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Schema  = mongoose.Schema;
+const paginate = require("mongoose-aggregate-paginate-v2");
 
 const UserSchema = new Schema({
     role: { type: Schema.Types.ObjectId, default: null, ref: "roles", index: true },
@@ -14,5 +15,7 @@ const UserSchema = new Schema({
 }, {
     timestamps: true, versionKey: false
 });
+
+UserSchema.plugin(paginate);
 
 module.exports = mongoose.model("users", UserSchema);

@@ -51,141 +51,109 @@ class UserRepo extends CommonRepo{
         }
     }
 
-    getAll = async(params)=>{
+    getAll = async(req) => {
         try {
-            return await UserModel.aggregate([
-                {
-                    $match: params
-                }
-            ])
-        } catch (error) {
-            throw error;
-        }
-    }
+            // default query
+            let query = {
+                role: req.body.role,
+                isDeleted: false
+            };
 
-    getAll = async(req)=>{
-        try {
-            let query = { role: new mongoose.Types.ObjectId(req.body.abcd), isDeleted: false };
-            let sortField = req.body.sortField||'name';
-            let sortOperator = {
-                $sort: { [sortField]: 1 } // $sort: { name: 1 }
-            }
-            if (req.body.status) {
-                // query.status = req.body.status;
-                query['status'] = req.body.status;
-            }
-            if (req.body.sortOrder && req.body.sortOrder=='desc') {
-                sortOperator.$sort[sortField] = -1;
-            }
-            if (req.body.search) {
-                query['$or'] = [
-                    { email: { $regex: req.body.search, $options: 'i' } },
-                    { name: { $regex: req.body.search, $options: 'i' } }
-                ]
-            }
-            
-            return await UserModel.aggregate([
-                {
-                    $match: query
-                },
-                {
-                    $addFields: {
-                        name_temp: "$name",
-                        name: { $toLower: "$name" }
-                    }
-                },
-                sortOperator,
-                {
-                    $addFields: {
-                        name: "$name_temp"
-                    }
-                },
-                {
-                    $project: {
-                        name_temp: 0
-                    }
-                }
-            ])
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    getAll1 = async(params)=>{
-        try {
-            return await UserModel.aggregate([
-                {
-                    $match: params
-                },
-                {
-                    $lookup: {
-                        from: "roles",
-                        foreignField: "_id",
-                        localField: "role",
-                        as: "role",
-                        pipeline: [
-                            {
-                                $project: {
-                                    isDeleted: 0,
-                                    status: 0
-                                }
-                            }
-                        ]
-                    }
-                },
-                {
-                    $unwind: {
-                        path: "$role", preserveNullAndEmptyArrays: false
-                    }
-                }
-            ])
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    getAll2 = async(req)=>{
-        try {
-            let query = { role: req.body.role, isDeleted: false, status: "Active" };
-            if(req.body.search){
-                query['$or'] = [
+            // search
+            if (req.body.search) { 
+                query.$or = [
                     {
-                        email: { $regex: req.body.search, $options: "i" }
+                        name: { $regex: req.body.search, $options: "i" }
                     },
                     {
                         email: { $regex: req.body.search, $options: "i" }
                     }
                 ]
             }
+            // filter
+            if(req.body.status){
+                query['status'] = req.body.status;
+            }
+
+            // sorting
+            let sortField = "name";
+            let sortOrder = 1;
+            if(req.body.sortField){
+                sortField = req.body.sortField;
+            }
+            if(req.body.sortOrder && req.body.sortOrder == "desc" ){
+                sortOrder = -1;
+            }
+            // aggregation
             return await UserModel.aggregate([
                 {
                     $match: query
                 },
-                
                 {
-                    $lookup: {
-                        from: "roles",
-                        foreignField: "_id",
-                        localField: "role",
-                        as: "role",
-                        pipeline: [
-                            {
-                                $project: {
-                                    isDeleted: 0,
-                                    status: 0
-                                }
-                            }
-                        ]
-                    }
-                },
-                {
-                    $unwind: {
-                        path: "$role", preserveNullAndEmptyArrays: false
+                    $sort: {
+                        [sortField]: sortOrder
                     }
                 }
             ])
+
+            // pagination
         } catch (error) {
             throw error;
+        }
+    }
+
+    getAllAgain = async(req)=>{
+        try {
+            //default query
+            let query = {
+                role: req.body.role,
+                isDeleted: false
+            }
+            
+            //search
+            if(req.body.search){
+                query.$or = [
+                    {
+                        name: { $regex: '^' + req.body.search, $options: "i" }
+                    },
+                    {
+                        email: { $regex: '^' + req.body.search, $options: "i" }
+                    }
+                ]
+            }
+            
+            //filter 
+            if(req.body.status){
+                query['status'] = req.body.status;
+            }
+
+            //default sort
+            let sortField = 'name', sortOrder = 1;
+
+            //sort
+            if(req.body.sortField){
+                sortField = req.body.sortField;
+            }
+            if(req.body.sortOrder && req.body.sortOrder == 'desc'){
+                sortOrder = -1;
+            }
+
+            let aggregate = UserModel.aggregate([
+                {
+                    $match: query
+                },
+                {
+                    $sort: {
+                        [sortField]: sortOrder
+                    }
+                }
+            ]);
+            return await UserModel.aggregatePaginate(aggregate,{
+                page: req.body.pageNum?req.body.pageNum:1,
+                limit: 10
+            });
+        } catch (error) {
+            throw error
         }
     }
 }

@@ -32,7 +32,6 @@ namedRouter.post("user.signin", "/user/signin", userController.signIn);
 namedRouter.post("user.forget_password", "/user/forgetpassword", userController.forgetPassword);
 namedRouter.post("user.otp_verification", "/user/otpverification", userController.otpVerification);
 namedRouter.post("user.reset_password", "/user/resetpassword", userController.resetPassword);
-namedRouter.post("user.list", "/user/list", userController.list);
 
 namedRouter.all("/user*", Auth.authenticate);
 

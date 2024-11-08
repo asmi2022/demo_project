@@ -42,6 +42,13 @@ class FAQController {
 
     update = async(req,res)=>{
         try {
+            if(!req.body.id){
+                return res.status(400).send({
+                    status: 400,
+                    data: null,
+                    message: "ID is required"
+                });
+            }
             req.body.question = req.body.question.trim();
             let existFAQ = await this.#repo.faqRepo.getByField({ question: req.body.question, isDeleted: false, _id: { $ne: mongoose.Types.ObjectId(req.body.id) } });
             if(existFAQ){
