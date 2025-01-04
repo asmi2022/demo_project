@@ -1,7 +1,7 @@
 const userRepo = require("../user/repositories/user.repository");
 const roleRepo = require("../role/repositories/role.repository");
 const validator = require("validator");
-const helper = require("../../utils/helper.cjs");
+const helper = require("../../utils/helper.js");
 const jwt = require("jsonwebtoken");
 const {unlinkSync, existsSync} = require("fs");
 const otpGenerator = require("otp-generator");

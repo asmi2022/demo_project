@@ -1,4 +1,4 @@
-const productRepo = require("../repository/product.repository");
+const productRepo = require("../repositories/product.repository");
 
 class ProductController {
 
@@ -17,6 +17,7 @@ class ProductController {
                 });
             }
             let saveProduct = await this.#repo.productRepo.save(req.body);
+
             if(saveProduct && saveProduct._id){
                 return res.status(200).send({
                     status: 200,

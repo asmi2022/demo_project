@@ -69,6 +69,14 @@ class CommonRepo {
             throw error;
         }
     }
+
+    bulkDelete = async(params)=>{
+        try {
+            return await this.#Model.deleteMany(params);
+        } catch (error) {
+            throw error;
+        }
+    }
 }
 
 module.exports = CommonRepo;

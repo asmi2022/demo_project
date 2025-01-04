@@ -41,7 +41,8 @@ class UserController {
             
             return res.status(200).send({
                 status: 200,
-                signedin: true,
+                data: user,
+                token: token,
                 message: "Signed in successfully"
             })
         } catch (error) {
@@ -215,6 +216,8 @@ class UserController {
             });
         }
     }
+
+    // token er respect a user details
 
     logOut = async(req,res)=>{
         try {
