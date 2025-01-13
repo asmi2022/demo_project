@@ -1,17 +1,17 @@
-const  CommonRepo = require("../../../utils/common.repository");
+const CommonRepo = require("../../../utils/common.repository");
 const CartModel = require("../models/cart.schema");
 
-class CartRepo extends CommonRepo{
+class CartRepository extends CommonRepo{
     constructor(){
         super(CartModel);
     }
 
-    cartDetails = async(id)=>{
+    cartDetails = async(userId)=>{
         try {
             return await CartModel.aggregate([
                 {
                     $match: {
-                        userId: id
+                        userId
                     }
                 },
                 {
@@ -37,16 +37,9 @@ class CartRepo extends CommonRepo{
                 },
                 {
                     $addFields: {
-                        total: {
+                        itemPrice: {
                             $multiply: [ "$quantity", "$product.price" ]
                         }
-                    }
-                },
-                {
-                    $project: {
-                        createdAt: 0,
-                        updatedAt: 0,
-                        productId: 0
                     }
                 },
                 {
@@ -55,14 +48,9 @@ class CartRepo extends CommonRepo{
                         products: {
                             $push: "$$ROOT"
                         },
-                        subTotal: {
-                            $sum: "$total"
+                        total: {
+                            $sum: "$itemPrice"
                         }
-                    }
-                },
-                {
-                    $project: {
-                        "products.userId" : 0
                     }
                 }
             ])
@@ -72,4 +60,4 @@ class CartRepo extends CommonRepo{
     }
 }
 
-module.exports = new CartRepo();
+module.exports = new CartRepository();

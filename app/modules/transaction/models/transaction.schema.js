@@ -4,11 +4,11 @@ const Schema = mongoose.Schema;
 const TransactionSchema = new Schema({
     userId: { type: Schema.Types.ObjectId, default: null, ref: "users", index: true },
     orderId: { type: Schema.Types.ObjectId, default: null, ref: "orders", index: true },
-    amount: { type: Number, default: null, index: true },
-    paymentMode: { type: String, default: "Online", enum: [ "Online", "COD"  ], index: true },
-    transactionId: { type: String, default: "" },
+    transactionId: { type: String, default: "", index: true },
+    amount: { type: Number, default: 0, index: true },
+    paymentMode: { type: String, default: "Online", enum: [ "Online", "COD", "Pay Later" ], index: true },
     paymentMethod: { type: String, default: "" },
-    status: { type: String, default: "Pending", enum: [ "Pending", "Successful", "Failed", "Refunded" ], index: true },
+    paymentStatus: { type: String, default: "Pending", enum: [ "Pending", "Paid", "Failed", "Canceled", "Refunded" ], index: true }
 }, {
     timestamps: true, versionKey: false
 });
